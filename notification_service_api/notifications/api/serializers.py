@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from notification_service_api.notifications.models import (
@@ -9,20 +10,32 @@ from notification_service_api.notifications.models import (
 )
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=50)
+
     class Meta:
         model = Tag
-        fields = ["id", "name"]
+        # fields = ["id", "name"]
+        # extra_kwargs = {
+        #     'name': {'validators': []},
+        # }
 
 
-class OperatorSerializer(serializers.ModelSerializer):
+class OperatorSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=50)
+    name = serializers.CharField(required=False, max_length=50, allow_blank=True)
+
     class Meta:
         model = Operator
-        fields = ["id", "code", "name"]
+        # fields = ["id", "code", "name"]
+        # extra_kwargs = {
+        #     'code': {'validators': []},
+        # }
 
 
 class MailingSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
+    tags = TagSerializer(many=True, required=False)
+    operator_code = OperatorSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Mailing
@@ -36,13 +49,51 @@ class MailingSerializer(serializers.ModelSerializer):
             "operator_code",
         )
 
+    def create(self, validated_data):
+        operator_data = validated_data.pop("operator_code")
+        tags_data = validated_data.pop("tags")
+        if operator_data:
+            try:
+                operator = Operator.objects.get(code=operator_data["code"])
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(
+                    {"code": "Такого оператора не существует в базе"}
+                )
+        else:
+            operator = None
+        tags_list = []
+        for item in tags_data:
+            try:
+                tag = Tag.objects.get(name=item["name"])
+                tags_list.append(tag)
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(
+                    {"name": "Такого тега не существует в базе"}
+                )
+        mailing = Mailing.objects.create(operator_code=operator, **validated_data)
+        mailing.tags.set(tags_list)
+        return mailing
+
 
 class ClientSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
+    operator_code = OperatorSerializer()
 
     class Meta:
         model = Client
         fields = ("id", "phone_number", "operator_code", "tags", "timezone")
+
+    def create(self, validated_data):
+        operator_data = validated_data.pop("operator_code")
+        tags_data = validated_data.pop("tags")
+        operator, _ = Operator.objects.get_or_create(**operator_data)
+        tags_list = []
+        for item in tags_data:
+            obj, _ = Tag.objects.get_or_create(name=item["name"])
+            tags_list.append(obj)
+        client = Client.objects.create(operator_code=operator, **validated_data)
+        client.tags.set(tags_list)
+        return client
 
 
 class MessageSerializer(serializers.ModelSerializer):
