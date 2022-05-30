@@ -1,3 +1,5 @@
+import pytz
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -61,3 +63,40 @@ class Mailing(models.Model):
             return f"{self.title} ({self.start_datetime}-{self.end_datetime})"
         else:
             return f"{self.mailing_text[:30]}... ({self.start_datetime}-{self.end_datetime})"
+
+
+class Client(models.Model):
+    """
+    Сущность "клиент"
+    """
+
+    TIMEZONE_CHOICES = zip(pytz.all_timezones, pytz.all_timezones)
+
+    phone_regex = RegexValidator(
+        regex=r"^7[0-9]{10}$",
+        message="Телефон должен соответствовать формату 7XXXXXXXXXX",
+    )
+    phone_number = models.CharField(
+        verbose_name="Номер телефона",
+        validators=[phone_regex],
+        max_length=11,
+        unique=True,
+    )
+    operator_code = models.ForeignKey(
+        Operator, verbose_name="Код оператора", related_name="clients"
+    )
+    tags = models.ManyToManyField(Tag, verbose_name="Теги", related_name="clients")
+    timezone = models.CharField(
+        verbose_name="Часовой пояс",
+        max_length=255,
+        default="UTC",
+        choices=TIMEZONE_CHOICES,
+    )
+
+    class Meta:
+        verbose_name = "Клиент"
+        verbose_name_plural = "Клиенты"
+        ordering = ("id",)
+
+    def __str__(self):
+        return self.phone_number
