@@ -83,7 +83,10 @@ class Client(models.Model):
         unique=True,
     )
     operator_code = models.ForeignKey(
-        Operator, verbose_name="Код оператора", related_name="clients"
+        Operator,
+        verbose_name="Код оператора",
+        related_name="clients",
+        on_delete=models.PROTECT,
     )
     tags = models.ManyToManyField(Tag, verbose_name="Теги", related_name="clients")
     timezone = models.CharField(
