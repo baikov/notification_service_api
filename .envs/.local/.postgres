@@ -1,0 +1,9 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=notification_service_api
+# POSTGRES_USER=iicEXJNrgLeVgqAcqulhknpgxUhLgEYc
+# POSTGRES_PASSWORD=ttCEm1aT6PqoeTGMcj3AeewwJety0NcwqF0ZL9E9m3ZAenYhiMHgqzjuuOoIfCR2
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres

@@ -1,0 +1,20 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+# CELERY_FLOWER_USER=nGmCmcvkszDNZdZXuDAcwwxLGPlEOotF
+# CELERY_FLOWER_PASSWORD=vKo8z5UgkKI2aBZNSVkEeDXGL1uvLiV16kwI83N7NEUni9u7Fd2SaTubtTbsqdP0
+CELERY_FLOWER_USER=admin
+CELERY_FLOWER_PASSWORD=admin
+
+# Send notification API
+SEND_SERVICE_API_URL=https://probe.fbrq.cloud/v1
+SEND_SERVICE_API_TOKEN=token
