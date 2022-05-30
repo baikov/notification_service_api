@@ -51,6 +51,7 @@ class Mailing(models.Model):
         related_name="mailings",
         on_delete=models.PROTECT,
         blank=True,
+        null=True,
     )
 
     class Meta:
