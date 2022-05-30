@@ -100,3 +100,46 @@ class Client(models.Model):
 
     def __str__(self):
         return self.phone_number
+
+
+class Message(models.Model):
+    """
+    Сущность "сообщение"
+    """
+
+    class SendingStatus(models.TextChoices):
+        SENT = "sent", "Отправлено"
+        SCHEDULED = "scheduled", "Отправка запланирована"
+        DELAYED = "delayed", "Отправка отложена"
+        DELIVERED = "delivered", "Доставлено"
+        NOT_DELIVERED = "not_delivered", "Не доставлено"
+        ERROR = "error", "Ошибка"
+
+    create_datetime = models.DateTimeField(
+        verbose_name="Дата и время создания", auto_now_add=True
+    )
+    # send_datetime = models.DateTimeField(verbose_name="Дата и время отправки", blank=True)
+    # delivery_datetime = models.DateTimeField(verbose_name="Дата и время доставки", blank=True)
+    status = models.CharField(
+        verbose_name="Статус",
+        choices=SendingStatus.choices,
+        default=SendingStatus.SCHEDULED,
+        max_length=50,
+    )
+    mailing = models.ForeignKey(
+        Mailing,
+        verbose_name="Рассылка",
+        related_name="messages",
+        on_delete=models.CASCADE,
+    )
+    client = models.ForeignKey(
+        Client, verbose_name="Клиент", related_name="messages", on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = "Сообщение"
+        verbose_name_plural = "Сообщения"
+        ordering = ("id",)
+
+    def __str__(self):
+        return f"{self.id}-{self.mailing}-{self.client} [{self.status}]"
