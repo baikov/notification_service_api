@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from notification_service_api.notifications.models import Client, Mailing, Operator, Tag
+from notification_service_api.notifications.models import (
+    Client,
+    Mailing,
+    Message,
+    Operator,
+    Tag,
+)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -37,3 +43,9 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ("id", "phone_number", "operator_code", "tags", "timezone")
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ("id", "create_datetime", "status", "mailing", "client")
