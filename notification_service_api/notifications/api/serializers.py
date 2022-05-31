@@ -35,7 +35,7 @@ class OperatorSerializer(serializers.Serializer):
 
 class MailingSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, required=False)
-    operator_code = OperatorSerializer(required=False, allow_null=True)
+    operators = OperatorSerializer(required=False, allow_null=True, many=True)
 
     class Meta:
         model = Mailing
@@ -46,21 +46,24 @@ class MailingSerializer(serializers.ModelSerializer):
             "end_datetime",
             "text",
             "tags",
-            "operator_code",
+            "operators",
         )
 
     def create(self, validated_data):
-        operator_data = validated_data.pop("operator_code")
+        operators_data = validated_data.pop("operators")
         tags_data = validated_data.pop("tags")
-        if operator_data:
-            try:
-                operator = Operator.objects.get(code=operator_data["code"])
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError(
-                    {"code": "Такого оператора не существует в базе"}
-                )
-        else:
-            operator = None
+        operators_list = []
+        if operators_data:
+            for item in operators_data:
+                try:
+                    operator = Operator.objects.get(code=item["code"])
+                    operators_list.append(operator)
+                except ObjectDoesNotExist:
+                    raise serializers.ValidationError(
+                        {"code": "Такого оператора не существует в базе"}
+                    )
+        # else:
+        #     operator = None
         tags_list = []
         for item in tags_data:
             try:
@@ -70,8 +73,9 @@ class MailingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"name": "Такого тега не существует в базе"}
                 )
-        mailing = Mailing.objects.create(operator_code=operator, **validated_data)
+        mailing = Mailing.objects.create(**validated_data)
         mailing.tags.set(tags_list)
+        mailing.operators.set(operators_list)
         return mailing
 
 
