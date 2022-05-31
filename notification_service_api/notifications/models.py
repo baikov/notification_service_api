@@ -42,16 +42,17 @@ class Mailing(models.Model):
     end_datetime = models.DateTimeField(verbose_name="Дата и время окончания рассылки")
     text = models.CharField(verbose_name="Текст рассылки", max_length=250)
     tags = models.ManyToManyField(
-        Tag, verbose_name="Теги", related_name="mailings", blank=True
+        Tag,
+        verbose_name="Теги",
+        related_name="mailings",
+        blank=True,
     )
-    operator_code = models.ForeignKey(
+    operators = models.ManyToManyField(
         Operator,
         verbose_name="Код оператора",
         help_text="Если оператор не выбран, то рассылка по всем",
         related_name="mailings",
-        on_delete=models.PROTECT,
         blank=True,
-        null=True,
     )
 
     class Meta:
