@@ -33,6 +33,7 @@ class ClientAdmin(admin.ModelAdmin):
 @admin.register(Mailing)
 class MailingAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "title",
         "text",
         "start_datetime",
@@ -50,7 +51,7 @@ class MailingAdmin(admin.ModelAdmin):
                     "start_datetime",
                     "end_datetime",
                     "tags",
-                    "operator_code",
+                    "operators",
                 ]
             },
         ),
