@@ -12,23 +12,39 @@ logger = logging.getLogger("mailing")
 # SEND_SERVICE_API_URL = "https://probe.fbrq.cloud/v1"
 SEND_SERVICE_API_URL = env("SEND_SERVICE_API_URL")
 HEADERS = {"Authorization": f'Bearer {env("SEND_SERVICE_API_TOKEN")}'}
+LOGIC = "and"
 
 
 def start_mailing(mailing_id):
-    # mailing = get_object_or_404(Mailing.objects.prefetch_related("tags__clients"), pk=mailing_id)
-    # tags =
-    # clients = Client.objects.filter(tags=).distinct()
     logger.info(f"Получен id рассылки: {mailing_id}")
-    # all = Mailing.objects.all()
-    # logger.info(f"Последняя: {all}")
     mailing = get_object_or_404(
         Mailing.objects.prefetch_related("tags", "operators"),
         id=mailing_id,
     )
-    logger.info(f"Операторы: {mailing.operators.all()}")
-    logger.info(f"Теги: {mailing.tags.all()}")
+    tags = mailing.tags.all()
+    operators = mailing.operators.all()
+    logger.info(f"Операторы: {operators}")
+    logger.info(f"Теги: {tags}")
     logger.info(f"Запуск рассылки: {mailing.title}")
+
     clients = Client.objects.all()
+    if operators:
+        clients = clients.filter(operator_code__in=operators)
+    if tags:
+        if LOGIC == "and":
+            for tag in tags:
+                clients = clients.filter(tags=tag)
+        else:
+            clients = Client.objects.filter(tags__in=tags).distinct()
+
+    # if LOGIC == "and":
+    #     clients = Client.objects.filter(operator_code__in=operators)
+    #     for tag in tags:
+    #         clients = clients.filter(tags=tag)
+    # else:
+    #     clients = Client.objects.filter(operator_code__in=operators, tags__in=tags).distinct()
+    logger.info(f"Клиенты: {clients}")
+
     for client in clients:
         send_message(client.id, client.phone_number, mailing.text)
     logger.info(f"{mailing.title} завершена")
