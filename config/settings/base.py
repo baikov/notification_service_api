@@ -251,9 +251,45 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
-        }
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": f"{str(APPS_DIR)}/logs/debug.log",
+            "formatter": "verbose",
+        },
+        "msg_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": f"{str(APPS_DIR)}/logs/messages.log",
+            "formatter": "verbose",
+        },
+        "mailing_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": f"{str(APPS_DIR)}/logs/mailing.log",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "mailing": {
+            "handlers": ["mailing_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "messages": {
+            "handlers": ["msg_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        # 'django': {
+        #     'handlers': ['file'],
+        #     'level': 'INFO',
+        #     'propagate': True,
+        # },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+    # "root": {"level": "INFO", "handlers": ["file"]},
 }
 
 # Celery
