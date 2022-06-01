@@ -45,6 +45,7 @@ class MailingSerializer(serializers.ModelSerializer):
             "start_datetime",
             "end_datetime",
             "text",
+            "tags_logic",
             "tags",
             "operators",
         )
