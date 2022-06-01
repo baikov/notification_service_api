@@ -1,61 +1,91 @@
-# import requests
 import logging
 
 import environ
+import requests
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 
-from .models import Client, Mailing
+from .models import Client, Mailing, Message
 
 env = environ.Env()
 
-logger = logging.getLogger("mailing")
-# SEND_SERVICE_API_URL = "https://probe.fbrq.cloud/v1"
+logger = logging.getLogger("notifications")
+
 SEND_SERVICE_API_URL = env("SEND_SERVICE_API_URL")
-HEADERS = {"Authorization": f'Bearer {env("SEND_SERVICE_API_TOKEN")}'}
-LOGIC = "and"
+SEND_SERVICE_API_TOKEN = env("SEND_SERVICE_API_TOKEN")
+HEADERS = {"Authorization": f"Bearer {SEND_SERVICE_API_TOKEN}"}
 
 
-def start_mailing(mailing_id):
-    logger.info(f"Получен id рассылки: {mailing_id}")
-    mailing = get_object_or_404(
-        Mailing.objects.prefetch_related("tags", "operators"),
-        id=mailing_id,
-    )
+def get_clients_for_mailing(mailing: Mailing) -> QuerySet[Client]:
+    """
+    Возвращает готовый сет клиентов для рассылки.
+    Фильтрация по тегам в зависимости от логики.
+    """
+    clients = Client.objects.all()
     tags = mailing.tags.all()
     operators = mailing.operators.all()
-    logger.info(f"Операторы: {operators}")
-    logger.info(f"Теги: {tags}")
-    logger.info(f"Запуск рассылки: {mailing.title}")
-
-    clients = Client.objects.all()
     if operators:
         clients = clients.filter(operator_code__in=operators)
     if tags:
-        if LOGIC == "and":
+        if mailing.tags_logic == "and":
             for tag in tags:
                 clients = clients.filter(tags=tag)
         else:
             clients = Client.objects.filter(tags__in=tags).distinct()
+    return clients
 
-    # if LOGIC == "and":
-    #     clients = Client.objects.filter(operator_code__in=operators)
-    #     for tag in tags:
-    #         clients = clients.filter(tags=tag)
-    # else:
-    #     clients = Client.objects.filter(operator_code__in=operators, tags__in=tags).distinct()
-    logger.info(f"Клиенты: {clients}")
 
+def create_messages(mailing_id: int) -> QuerySet[Message]:
+    """
+    Создает сообщения для конкретной рассылки
+    """
+    mailing = get_object_or_404(
+        Mailing.objects.prefetch_related("tags", "operators"),
+        id=mailing_id,
+    )
+    clients = get_clients_for_mailing(mailing)
+    logger.info(f"Рассылка id {mailing.id} - Создаем сообщения")
     for client in clients:
-        send_message(client.id, client.phone_number, mailing.text)
-    logger.info(f"{mailing.title} завершена")
+        message, created = Message.objects.update_or_create(
+            status="sending",
+            mailing=mailing,
+            client=client,
+        )
+    logger.info(f"Рассылка id {mailing.id} - Создание сообщений завершено")
+    messages = Message.objects.filter(mailing=mailing)
+    return messages
 
 
-def send_message(message_id, phone_number, text):
-    data = {"id": message_id, "phone": phone_number, "text": text}
-    logger.info(f"Сообщение {data}, url: {SEND_SERVICE_API_URL}, headers: {HEADERS}")
-    # response = requests.post(
-    #     url=f"{SEND_SERVICE_API_URL}/send/{message_id}",
-    #     json=data,
-    #     headers=HEADERS,
-    # )
-    # return response
+def send_message(message_id: int) -> requests.Response:
+    message = get_object_or_404(
+        Message,
+        id=message_id,
+    )
+    data = {
+        "id": message.id,
+        "phone": message.client.phone_number,
+        "text": message.mailing.text,
+    }
+    logger.info(f"Сообщение id {message.id} готово к отправке")
+    try:
+        response = requests.post(
+            url=f"{SEND_SERVICE_API_URL}/send/{message.id}",
+            json=data,
+            headers=HEADERS,
+        )
+        response.raise_for_status()
+    except Exception as e:
+        logger.info(
+            f"Сообщение id {message.id}. При обращению к API отправки возникла ошибка {e}"
+        )
+
+    if response.status_code == 200:
+        message.status = "success"
+    elif response.status_code == 400:
+        message.status = "failure"
+    else:
+        message.status = "error"
+    message.save()
+    logger.info(f"Сообщение id {message.id} - статус изменен на {message.status}")
+
+    return response
