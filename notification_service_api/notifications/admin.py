@@ -50,6 +50,7 @@ class MailingAdmin(admin.ModelAdmin):
                     "text",
                     "start_datetime",
                     "end_datetime",
+                    "tags_logic",
                     "tags",
                     "operators",
                 ]
