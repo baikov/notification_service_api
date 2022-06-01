@@ -63,8 +63,7 @@ class MailingSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         {"code": "Такого оператора не существует в базе"}
                     )
-        # else:
-        #     operator = None
+
         tags_list = []
         for item in tags_data:
             try:
@@ -78,6 +77,43 @@ class MailingSerializer(serializers.ModelSerializer):
         mailing.tags.set(tags_list)
         mailing.operators.set(operators_list)
         return mailing
+
+    def update(self, instance, validated_data):
+        operators_data = validated_data.pop("operators")
+        tags_data = validated_data.pop("tags")
+        operators_list = []
+        if operators_data:
+            for item in operators_data:
+                try:
+                    operator = Operator.objects.get(code=item["code"])
+                    operators_list.append(operator)
+                except ObjectDoesNotExist:
+                    raise serializers.ValidationError(
+                        {"code": "Такого оператора не существует в базе"}
+                    )
+
+        tags_list = []
+        for item in tags_data:
+            try:
+                tag = Tag.objects.get(name=item["name"])
+                tags_list.append(tag)
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError(
+                    {"name": "Такого тега не существует в базе"}
+                )
+        instance.title = validated_data.get("title", instance.title)
+        instance.start_datetime = validated_data.get(
+            "start_datetime", instance.start_datetime
+        )
+        instance.end_datetime = validated_data.get(
+            "end_datetime", instance.end_datetime
+        )
+        instance.text = validated_data.get("text", instance.text)
+        instance.tags_logic = validated_data.get("tags_logic", instance.tags_logic)
+        instance.tags.set(tags_list)
+        instance.operators.set(operators_list)
+        instance.save()
+        return instance
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -99,6 +135,23 @@ class ClientSerializer(serializers.ModelSerializer):
         client = Client.objects.create(operator_code=operator, **validated_data)
         client.tags.set(tags_list)
         return client
+
+    def update(self, instance, validated_data):
+        operator_data = validated_data.pop("operator_code")
+        tags_data = validated_data.pop("tags")
+        operator, _ = Operator.objects.get_or_create(**operator_data)
+        tags_list = []
+        for item in tags_data:
+            obj, _ = Tag.objects.get_or_create(name=item["name"])
+            tags_list.append(obj)
+        instance.phone_number = validated_data.get(
+            "phone_number", instance.phone_number
+        )
+        instance.timezone = validated_data.get("timezone", instance.timezone)
+        instance.operator_code = operator
+        instance.tags.set(tags_list)
+        instance.save()
+        return instance
 
 
 class MessageSerializer(serializers.ModelSerializer):
