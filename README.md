@@ -31,28 +31,42 @@ License: MIT
 
 ### Клонировать репозиторий
 
-`git clone https://github.com/baikov/notification_service_api.git`
+```
+git clone https://github.com/baikov/notification_service_api.git
+```
 
 ### Собираем стек в Docker
 
-`docker-compose -f local.yml build`
+```
+docker-compose -f local.yml build
+```
 
 ### Поднимаем стек
 
-`docker-compose up -d`
+```
+docker-compose up -d
+```
 
 ### Выполняем миграции
 
-`docker-compose -f local.yml run --rm django python manage.py makemigrations`
-`docker-compose -f local.yml run --rm django python manage.py migrate`
+```
+docker-compose -f local.yml run --rm django python manage.py makemigrations
+```
+```
+docker-compose -f local.yml run --rm django python manage.py migrate
+```
 
 ### Создаем суперюзера
 
-`docker-compose -f local.yml run --rm django python manage.py createsuperuser`
+```
+docker-compose -f local.yml run --rm django python manage.py createsuperuser
+```
 
 ## Тестирование
 
-`docker-compose -f local.yml run --rm django pytest`
+```
+docker-compose -f local.yml run --rm django pytest
+```
 
 ## Дополнтельно
 
