@@ -17,4 +17,4 @@ CELERY_FLOWER_PASSWORD=admin
 
 # Send notification API
 SEND_SERVICE_API_URL=https://probe.fbrq.cloud/v1
-SEND_SERVICE_API_TOKEN=token
+SEND_SERVICE_API_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODUwMjczMDEsImlzcyI6ImZhYnJpcXVlIiwibmFtZSI6IkBhbGV4YmFpa292In0.udsj2WB_zk2oZuX0oZ2Lin-9EMa_dQXq7-xDyBuf_s4
