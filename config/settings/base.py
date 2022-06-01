@@ -252,33 +252,18 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "filename": f"{str(APPS_DIR)}/logs/debug.log",
-            "formatter": "verbose",
-        },
-        "msg_file": {
+        "notifications_file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": f"{str(APPS_DIR)}/logs/messages.log",
-            "formatter": "verbose",
-        },
-        "mailing_file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": f"{str(APPS_DIR)}/logs/mailing.log",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": f"{str(APPS_DIR)}/logs/notifications.log",
+            "maxBytes": 1048576,  # 1MB
+            "backupCount": 5,
             "formatter": "verbose",
         },
     },
     "loggers": {
-        "mailing": {
-            "handlers": ["mailing_file"],
-            "level": "INFO",
-            "propagate": True,
-        },
-        "messages": {
-            "handlers": ["msg_file"],
+        "notifications": {
+            "handlers": ["notifications_file"],
             "level": "INFO",
             "propagate": True,
         },
@@ -357,10 +342,15 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Notification Service API API",
-    "DESCRIPTION": "Documentation of API endpoints of Notification Service API",
+    "TITLE": "Notification Service API",
+    "DESCRIPTION": "Documentation of API endpoints of Notification Service",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    # "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": [
+        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    # "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
     "SERVERS": [
         {"url": "http://127.0.0.1:8000", "description": "Local Development server"},
         {
