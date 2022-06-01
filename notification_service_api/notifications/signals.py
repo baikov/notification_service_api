@@ -8,6 +8,9 @@ from django.utils import timezone
 from .models import Client, Mailing, Message
 from .tasks import create_and_send_messeges_task
 
+# from django_celery_beat.models import PeriodicTask, ClockedSchedule
+
+
 logger = logging.getLogger("notifications")
 
 
