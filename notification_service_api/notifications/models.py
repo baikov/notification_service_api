@@ -1,4 +1,5 @@
 import pytz
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -35,12 +36,22 @@ class Mailing(models.Model):
     Сущность "рассылка"
     """
 
+    class TagsLogic(models.TextChoices):
+        AND = "and", "Все выбранные теги"
+        OR = "or", "Любой из выбранных тегов"
+
     title = models.CharField(
         verbose_name="Название рассылки", max_length=250, blank=True
     )
     start_datetime = models.DateTimeField(verbose_name="Дата и время запуска рассылки")
     end_datetime = models.DateTimeField(verbose_name="Дата и время окончания рассылки")
     text = models.CharField(verbose_name="Текст рассылки", max_length=250)
+    tags_logic = models.CharField(
+        verbose_name="Логика фильтрации клиентов",
+        choices=TagsLogic.choices,
+        default=TagsLogic.AND,
+        max_length=50,
+    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name="Теги",
@@ -65,6 +76,14 @@ class Mailing(models.Model):
             return f"{self.title} ({self.start_datetime}-{self.end_datetime})"
         else:
             return f"{self.mailing_text[:30]}... ({self.start_datetime}-{self.end_datetime})"
+
+    def clean(self):
+        if self.end_datetime <= self.start_datetime:
+            raise ValidationError(
+                {
+                    "end_datetime": "Дата окончания рассылки не может быть меньше даты начала рассылки."
+                }
+            )
 
 
 class Client(models.Model):
@@ -113,12 +132,11 @@ class Message(models.Model):
     """
 
     class SendingStatus(models.TextChoices):
-        SENT = "sent", "Отправлено"
-        SCHEDULED = "scheduled", "Отправка запланирована"
-        DELAYED = "delayed", "Отправка отложена"
-        DELIVERED = "delivered", "Доставлено"
-        NOT_DELIVERED = "not_delivered", "Не доставлено"
-        ERROR = "error", "Ошибка"
+        SUCCESS = "success", "Отправлено"
+        SENDING = "sending", "Отправляется"
+        RETRY = "retry", "Повторная отправка"
+        FAILURE = "failure", "Отправка провалена"
+        ERROR = "error", "Ошибка отправки"
 
     create_datetime = models.DateTimeField(
         verbose_name="Дата и время создания", auto_now_add=True
@@ -128,7 +146,7 @@ class Message(models.Model):
     status = models.CharField(
         verbose_name="Статус",
         choices=SendingStatus.choices,
-        default=SendingStatus.SCHEDULED,
+        default=SendingStatus.SENDING,
         max_length=50,
     )
     mailing = models.ForeignKey(
